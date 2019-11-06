@@ -1,0 +1,9 @@
+{
+  "telegram_chat_id": "ASK YOUR ID HERE @chatid_echo_bot",
+  "telegram_bot_key": "CREATE YOUR TELEGRAM BOT HERE @BotFather",
+  "exchange_api_slot_1": [{"name": "value", "key": "value", "secret": "value"}],
+  "exchange_api_slot_2": [{"name": "value", "key": "value", "secret": "value"}],
+  "exchange_api_slot_3": [{"name": "value", "key": "value", "secret": "value"}],
+  "exchange_api_slot_4": [{"name": "value", "key": "value", "secret": "value"}],
+  "exchange_api_slot_5": [{"name": "value", "key": "value", "secret": "value"}]
+}

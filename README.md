@@ -2,6 +2,15 @@
 
 
 
+## Features
+
+> Show wallet balances
+
+> Manual trading on Binance Exchange
+
+> Place limit orders, show and cancel them
+
+> Show coin prices
 
 
 ---

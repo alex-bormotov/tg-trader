@@ -2,10 +2,10 @@
   "telegram_chat_id": "ASK YOUR ID HERE @chatid_echo_bot",
   "telegram_bot_key": "CREATE YOUR TELEGRAM BOT HERE @BotFather",
   "exchange_api_data": [
-    {"name": "value", "key": "value", "secret": "value"},
-    {"name": "value", "key": "value", "secret": "value"},
-    {"name": "value", "key": "value", "secret": "value"},
-    {"name": "value", "key": "value", "secret": "value"},
-    {"name": "value", "key": "value", "secret": "value"}
+    {"account_name": "value", "key": "value", "secret": "value"},
+    {"account_name": "value", "key": "value", "secret": "value"},
+    {"account_name": "value", "key": "value", "secret": "value"},
+    {"account_name": "value", "key": "value", "secret": "value"},
+    {"account_name": "value", "key": "value", "secret": "value"}
   ]
 }

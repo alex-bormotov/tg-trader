@@ -4,6 +4,8 @@
 
 ## Features
 
+> Multiple exchange accounts, switch between them.
+
 > Show wallet balances
 
 > Manual trading on Binance Exchange

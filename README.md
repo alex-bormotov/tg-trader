@@ -107,8 +107,11 @@ sudo docker build -t tg-trader .
 ```bash
 sudo docker run tg-trader &
 ```
+
 ---
 
-### Donate
+> If my code was useful for you may buy me tea: 
 
-> If you would like to buy me a coffee  3K9ocinkiUUqkBj9BqvFVsUgW2uMLqZFcP (BTC)
+> BTC 1LTwU8hVYxxpHUDf3wYNDjnS9kK4PDdtgT
+
+> ETH 0x23913F4ab3839a8b7bB987F348b8d974C045Dd17

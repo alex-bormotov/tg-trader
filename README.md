@@ -10,7 +10,7 @@
 
 > Showing open orders
 
-> Notification if the order was executed
+> Orders status notification
 
 > Show coin prices
 

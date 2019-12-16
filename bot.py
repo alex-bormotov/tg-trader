@@ -211,22 +211,39 @@ def show_orders(update, context):
                         chat_id=update.effective_chat.id,
                         text="/orders <account_name> <coin_1> <coin_2>\n\nAn example (Open orders XRP/BTC): \n/orders account_1 xrp btc",
                     )
-        else:
-            account_name = context.args[0]
-            coin_1 = context.args[1].upper()
-            coin_2 = context.args[2].upper()
-            orders = exchange(account_name).fetch_open_orders(f"{coin_1}/{coin_2}")
-            if len(orders) == 1:
-                context.bot.send_message(
-                    chat_id=update.effective_chat.id,
-                    text=order_for_human(orders),
-                )
-            else:
-                for order in orders:
                     context.bot.send_message(
                         chat_id=update.effective_chat.id,
-                        text=order_for_human(order),
+                        text="/orders <account_name> <all> <coin_2>\n\nAn example (All open orders XRP/USDT): \n/orders account_1 usdt",
                     )
+        else:
+            if context.args[1] == 'all':
+                account_name = context.args[0]
+                coin_2 = context.args[2].upper()
+                balances = exchange(account_name).fetch_balance()['info']['balances']
+                for coin_1 in [i["asset"] for i in balances for k, v in i.items() if k == 'locked' and float(v) > 0]:
+                    orders = exchange(account_name).fetch_open_orders(f"{coin_1}/{coin_2}")
+                    for order in orders:
+                        context.bot.send_message(
+                            chat_id=update.effective_chat.id,
+                            text=order_for_human(order),
+                        )
+
+            else:
+                account_name = context.args[0]
+                coin_1 = context.args[1].upper()
+                coin_2 = context.args[2].upper()
+                orders = exchange(account_name).fetch_open_orders(f"{coin_1}/{coin_2}")
+                if len(orders) == 1:
+                    context.bot.send_message(
+                        chat_id=update.effective_chat.id,
+                        text=order_for_human(orders),
+                    )
+                else:
+                    for order in orders:
+                        context.bot.send_message(
+                            chat_id=update.effective_chat.id,
+                            text=order_for_human(order),
+                        )
 
 
     except ccxt.NetworkError as e:

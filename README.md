@@ -4,16 +4,27 @@
 
 ## Features
 
-> Multiple exchange accounts, switch between them.
+> This bot it like a Telegram interface for Binance exchange
 
-> Show wallet balances
+> Multiple exchange accounts, switch between them
 
-> Manual trading on Binance Exchange
+> Show wallet balances, per coin and all positive
 
-> Place limit orders, show and cancel them
+> Placing limit orders, and canceling them
+
+> Showing open orders
+
+> Notification if the order was executed
 
 > Show coin prices
 
+---
+
+> [Install](#install)
+
+> [Update](#Update)
+
+> [Say Me Thanks :)](#Donate)
 
 ---
 
@@ -110,7 +121,11 @@ sudo docker run tg-trader &
 
 ---
 
-> If my code was useful for you may buy me tea: 
+##### Donate
+
+> If my code was useful for you may buy me coffee:
+
+> [My Binance Referal Link](https://www.binance.com/en/register?ref=35560900)
 
 > BTC 1LTwU8hVYxxpHUDf3wYNDjnS9kK4PDdtgT
 

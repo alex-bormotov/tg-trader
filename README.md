@@ -1,7 +1,3 @@
-# tg-trader
-
-
-
 ## Features
 
 > This bot it like a Telegram interface for Binance exchange

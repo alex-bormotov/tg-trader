@@ -68,7 +68,7 @@ def exchange(account_name):
 
 
 def usd_price(coin, amount, account_name):
-    price = exchange(account_name).fetch_ticker(f"{coin.upper()}/USDC")["last"]
+    price = exchange(account_name).fetch_ticker(f"{coin.upper()}/USDT")["last"]
     return price * amount
 
 
@@ -78,6 +78,7 @@ def number_for_human(number):
         return "%.08f" % number  # str
     else:
         return str(number)[:9]  # str
+
 
 @restricted
 def start(update, context):
@@ -107,19 +108,27 @@ def fetch_balance(update, context):
         if len(" ".join(context.args)) == 0:
                     context.bot.send_message(
                         chat_id=update.effective_chat.id,
-                        text="/balance <account_name> <coin>\n\nAn example (Balance XRP on account 1): \n/balance account_1 xrp",
+                        text="/balance <account_name> <coin> or <all>\n\nAn example (Balance XRP on account 1): \n/balance account_1 xrp(or all for all not zero balances)",
                     )
         else:
             account_name = context.args[0]
             coin = context.args[1]
 
-            balance = exchange(account_name).fetch_balance()
-            balance = balance[coin.upper()]["free"]
-
-            context.bot.send_message(
-                chat_id=update.effective_chat.id,
-                text=f"{balance} {coin.upper()} ~ {round(usd_price(coin, balance, account_name))} USDC",
-            )
+            if coin == 'all':
+                balances = exchange(account_name).fetch_balance()['info']['balances']
+                balances = [f'{b["asset"]} {b["free"]}, in order {b["locked"]}' for b in balances for k, v in b.items() if k == 'free' and float(v) > 0]
+                for b in balances:
+                    if 'VTHO' not in b:
+                        context.bot.send_message(
+                            chat_id=update.effective_chat.id,
+                            text=b
+                        )
+            else:
+                b = exchange(account_name).fetch_balance()
+                context.bot.send_message(
+                    chat_id=update.effective_chat.id,
+                    text=f'{coin.upper()} total {b[coin.upper()]["total"]}, free {b[coin.upper()]["free"]}, in order {b[coin.upper()]["used"]} ~ {round(usd_price(coin, b[coin.upper()]["total"], account_name))} USDT'
+                )
 
     except ccxt.NetworkError as e:
         context.bot.send_message(chat_id=update.effective_chat.id, text=str(e))

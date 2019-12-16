@@ -8,9 +8,9 @@
 
 > Placing limit orders, and canceling them
 
-> Showing open orders
+> Changing orders status notification
 
-> Orders status notification
+> Showing open orders
 
 > Show coin prices
 

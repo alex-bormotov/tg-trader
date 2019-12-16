@@ -81,8 +81,7 @@ def number_for_human(number):
 
 
 def order_for_human(order):
-    return f'OrderId {order["id"]}, {order["type"]} {order["side"]} {order["amount"]} {order["symbol"]} at price {order["price"]} is {order["status"]}'
-
+    return f'Order {order["id"]}, {order["type"]} {order["side"]} {order["amount"]} {order["symbol"]} at price {order["price"]} is {order["status"]}'
 
 
 @restricted
@@ -97,7 +96,7 @@ def start(update, context):
 def help(update, context):
     context.bot.send_message(
         chat_id=update.effective_chat.id,
-        text="/balance\n\n/accounts\n\n/price\n\n/trade\n\n/orders\n\n/cancel_order",
+        text="/balance\n\n/accounts\n\n/price\n\n/trade\n\n/orders\n\n/cancel_order\n\n/monitoring_orders",
     )
 
 
@@ -209,41 +208,39 @@ def show_orders(update, context):
         if len(" ".join(context.args)) == 0:
                     context.bot.send_message(
                         chat_id=update.effective_chat.id,
-                        text="/orders <account_name> <coin_1> <coin_2>\n\nAn example (Open orders XRP/BTC): \n/orders account_1 xrp btc",
-                    )
-                    context.bot.send_message(
-                        chat_id=update.effective_chat.id,
-                        text="/orders <account_name> <all> <coin_2>\n\nAn example (All open orders XRP/USDT): \n/orders account_1 usdt",
+                        text="/orders <account_name> <coin_1> <coin_2>\n\nAn example (Open orders XRP/BTC): \n/orders account_1 xrp btc\n\nOr\n/orders <account_name> all",
                     )
         else:
             if context.args[1] == 'all':
+                context.bot.send_message(
+                    chat_id=update.effective_chat.id,
+                    text='Wait, please ...',
+                )
+
                 account_name = context.args[0]
-                coin_2 = context.args[2].upper()
-                balances = exchange(account_name).fetch_balance()['info']['balances']
-                for coin_1 in [i["asset"] for i in balances for k, v in i.items() if k == 'locked' and float(v) > 0]:
-                    orders = exchange(account_name).fetch_open_orders(f"{coin_1}/{coin_2}")
-                    for order in orders:
-                        context.bot.send_message(
-                            chat_id=update.effective_chat.id,
-                            text=order_for_human(order),
-                        )
+
+                all_markets = exchange(account_name).fetch_markets()
+                markets = [i['symbol'] for i in all_markets]
+                balances = exchange(account_name).fetch_balance()['total']
+                coins_1 = [k for k, v in balances.items() if v > 0 and k != 'VTHO']
+                coin_pairs = [t for i in coins_1 for t in markets if i == (t.split('/')[0])]
+                open_orders = [x for h in coin_pairs for x in exchange(account_name).fetch_open_orders(h) if len(x) > 0]
+                for order in open_orders:
+                    context.bot.send_message(
+                        chat_id=update.effective_chat.id,
+                        text=order_for_human(order),
+                    )
 
             else:
                 account_name = context.args[0]
                 coin_1 = context.args[1].upper()
                 coin_2 = context.args[2].upper()
                 orders = exchange(account_name).fetch_open_orders(f"{coin_1}/{coin_2}")
-                if len(orders) == 1:
+                for order in orders:
                     context.bot.send_message(
                         chat_id=update.effective_chat.id,
-                        text=order_for_human(orders),
+                        text=order_for_human(order),
                     )
-                else:
-                    for order in orders:
-                        context.bot.send_message(
-                            chat_id=update.effective_chat.id,
-                            text=order_for_human(order),
-                        )
 
 
     except ccxt.NetworkError as e:
@@ -297,4 +294,5 @@ if __name__ == "__main__":
     updater.dispatcher.add_handler(CommandHandler("cancel_order", cancel_order))
 
     updater.start_polling()
+
     updater.idle()

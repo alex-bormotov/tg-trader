@@ -80,6 +80,11 @@ def number_for_human(number):
         return str(number)[:9]  # str
 
 
+def order_to_human(order):
+    return f'OrderId {order["id"]}, {order["type"]} {order["side"]} {order["amount"]} {order["symbol"]} at price {order["price"]} is {order["status"]}'
+
+
+
 @restricted
 def start(update, context):
     context.bot.send_message(
@@ -187,7 +192,7 @@ def trade(update, context):
 
             context.bot.send_message(
                 chat_id=update.effective_chat.id,
-                text=order,
+                text=order_to_human(order),
             )
 
     except ccxt.NetworkError as e:
@@ -211,10 +216,18 @@ def show_orders(update, context):
             coin_1 = context.args[1].upper()
             coin_2 = context.args[2].upper()
             orders = exchange(account_name).fetch_open_orders(f"{coin_1}/{coin_2}")
-            context.bot.send_message(
-                chat_id=update.effective_chat.id,
-                text=orders,
-            )
+            if len(orders) == 1:
+                context.bot.send_message(
+                    chat_id=update.effective_chat.id,
+                    text=order_to_human(orders),
+                )
+            else:
+                for order in orders:
+                    context.bot.send_message(
+                        chat_id=update.effective_chat.id,
+                        text=order_to_human(order),
+                    )
+
 
     except ccxt.NetworkError as e:
         context.bot.send_message(chat_id=update.effective_chat.id, text=str(e))
@@ -240,7 +253,7 @@ def cancel_order(update, context):
             order = exchange(account_name).cancel_order(order_id, f"{coin_1}/{coin_2}")
             context.bot.send_message(
                 chat_id=update.effective_chat.id,
-                text=order,
+                text=order_to_human(order),
             )
 
 

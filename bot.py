@@ -8,6 +8,12 @@ from datetime import datetime, timedelta
 from telegram.ext import Updater, CommandHandler
 
 
+open_orders = []
+account_name = ''
+monitoring_state = 'OFF'
+chat_id_for_orders_notifications = None
+
+
 def get_config():
     with open("config.json", "r") as read_file:
         config = json.load(read_file)
@@ -279,6 +285,93 @@ def cancel_order(update, context):
         context.bot.send_message(chat_id=update.effective_chat.id, text=str(e))
 
 
+@restricted
+def monitoring_orders(update, context):
+
+    global account_name
+    global monitoring_state
+    global chat_id_for_orders_notifications
+
+
+    if len(" ".join(context.args)) == 0:
+                context.bot.send_message(
+                    chat_id=update.effective_chat.id,
+                    text="/monitoring_orders <account_name> on/off\n\n/monitoring_orders <account_name> status",
+                )
+
+    if context.args[1].upper() == "STATUS":
+        context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=f"Orders monitoring is {monitoring_state}",
+        )
+
+    if context.args[1].upper() == "ON" and monitoring_state == "ON":
+        context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=f"Orders monitoring is already {monitoring_state}, turn OFF it before new start",
+        )
+
+    if context.args[1].upper() == "OFF":
+        chat_id_for_orders_notifications = None
+        account_name = ''
+        monitoring_state = context.args[1].upper()
+        context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=f"Orders monitoring is {monitoring_state}",
+        )
+
+    if context.args[1].upper() == "ON" and monitoring_state == "OFF":
+        chat_id_for_orders_notifications = update.effective_chat.id
+        account_name = context.args[0]
+        monitoring_state = context.args[1].upper()
+        context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=f"Orders monitoring is {monitoring_state}",
+        )
+
+
+def orders_monitoring():
+    global open_orders
+
+    def order_status_is_open(order_id, coin_pair):
+        order = exchange(account_name).fetch_order(order_id, coin_pair)
+        return order, order['status']
+
+    try:
+        while True:
+            if monitoring_state == 'ON':
+                all_markets = exchange(account_name).fetch_markets()
+                markets = [i['symbol'] for i in all_markets]
+                balances = exchange(account_name).fetch_balance()['total']
+                coins_1 = [k for k, v in balances.items() if v > 0 and k != 'VTHO']
+                coin_pairs = [t for i in coins_1 for t in markets if i == (t.split('/')[0])]
+
+                open_orders_new = [(i['id'], i['symbol']) for i in [x for h in coin_pairs for x in exchange(account_name).fetch_open_orders(h) if len(x) > 0]]
+                if len(open_orders) == 0:
+                    if len(open_orders_new) != 0:
+                        open_orders = open_orders_new
+
+                for c, v in open_orders_new:
+                    if c not in [x for x, v in open_orders]:
+                        open_orders.append((c, v))
+
+                for c, v in open_orders:
+                    order_status_is_open_data = order_status_is_open(c, v)
+                    if order_status_is_open_data[1] != 'open':
+                        pop = open_orders.pop([index for index, k in enumerate(open_orders) if (c, v) == k][0])
+                        updater.bot.send_message(
+                            chat_id=chat_id_for_orders_notifications,
+                            text=order_for_human(order_status_is_open_data[0]),
+                        )
+                        
+                time.sleep(5)
+                continue
+            else:
+                time.sleep(5)
+                continue
+
+    except Exception as e:
+        context.bot.send_message(chat_id=update.effective_chat.id, text=str(e))
 
 
 if __name__ == "__main__":
@@ -292,7 +385,10 @@ if __name__ == "__main__":
     updater.dispatcher.add_handler(CommandHandler("trade", trade))
     updater.dispatcher.add_handler(CommandHandler("orders", show_orders))
     updater.dispatcher.add_handler(CommandHandler("cancel_order", cancel_order))
+    updater.dispatcher.add_handler(CommandHandler("monitoring_orders", monitoring_orders))
 
     updater.start_polling()
+
+    orders_monitoring()
 
     updater.idle()

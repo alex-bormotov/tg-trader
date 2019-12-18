@@ -8,11 +8,6 @@ from datetime import datetime, timedelta
 from telegram.ext import Updater, CommandHandler
 
 
-open_orders = []
-account_name = ''
-monitoring_state = 'OFF'
-chat_id_for_orders_notifications = None
-
 
 def get_config():
     with open("config.json", "r") as read_file:
@@ -37,6 +32,13 @@ def get_api_config(account_name):
             key = i["key"]
             secret = i["secret"]
             return key, secret
+
+
+
+admin_chat_id = get_telegram_config()[0]
+open_orders = []
+monitoring_state_name_chat_id = [('acc name', 'OFF', '000001')]
+
 
 
 def restricted(func):
@@ -126,7 +128,7 @@ def fetch_balance(update, context):
 
             if coin == 'all':
                 balances = exchange(account_name).fetch_balance()['info']['balances']
-                balances = [f'{b["asset"]} {b["free"]}, in order {b["locked"]}' for b in balances for k, v in b.items() if k == 'free' and float(v) > 0]
+                balances = [f'{b["asset"]} {number_for_human(b["free"])}, in order {number_for_human(b["locked"])}' for b in balances for k, v in b.items() if k == 'free' and float(v) > 0]
                 for b in balances:
                     if 'VTHO' not in b:
                         context.bot.send_message(
@@ -137,7 +139,7 @@ def fetch_balance(update, context):
                 b = exchange(account_name).fetch_balance()
                 context.bot.send_message(
                     chat_id=update.effective_chat.id,
-                    text=f'{coin.upper()} total {b[coin.upper()]["total"]}, free {b[coin.upper()]["free"]}, in order {b[coin.upper()]["used"]} ~ {round(usd_price(coin, b[coin.upper()]["total"], account_name))} USDT'
+                    text=f'{coin.upper()} total {number_for_human(b[coin.upper()]["total"])}, free {number_for_human(b[coin.upper()]["free"])}, in order {b[coin.upper()]["used"]} ~ {round(usd_price(coin, b[coin.upper()]["total"], account_name))} USDT'
                 )
 
     except ccxt.NetworkError as e:
@@ -218,24 +220,18 @@ def show_orders(update, context):
                     )
         else:
             if context.args[1] == 'all':
-                context.bot.send_message(
-                    chat_id=update.effective_chat.id,
-                    text='Wait, please ...',
-                )
-
                 account_name = context.args[0]
-
-                all_markets = exchange(account_name).fetch_markets()
-                markets = [i['symbol'] for i in all_markets]
-                balances = exchange(account_name).fetch_balance()['total']
-                coins_1 = [k for k, v in balances.items() if v > 0 and k != 'VTHO']
-                coins_1 = [k for k, v in balances.items()]
-                coin_pairs = [t for i in coins_1 for t in markets if i == (t.split('/')[1])]
-                open_orders = [x for h in coin_pairs for x in exchange(account_name).fetch_open_orders(h) if len(x) > 0]
-                for order in open_orders:
+                if len(open_orders) != 0:
+                    for order in open_orders:
+                        if order[0] == account_name:
+                            context.bot.send_message(
+                                chat_id=update.effective_chat.id,
+                                text=order_for_human(exchange(account_name).fetch_order(order[1], order[2])),
+                            )
+                else:
                     context.bot.send_message(
                         chat_id=update.effective_chat.id,
-                        text=order_for_human(order),
+                        text='Orders not found',
                     )
 
             else:
@@ -243,10 +239,16 @@ def show_orders(update, context):
                 coin_1 = context.args[1].upper()
                 coin_2 = context.args[2].upper()
                 orders = exchange(account_name).fetch_open_orders(f"{coin_1}/{coin_2}")
-                for order in orders:
+                if len(orders) != 0:
+                    for order in orders:
+                        context.bot.send_message(
+                            chat_id=update.effective_chat.id,
+                            text=order_for_human(order),
+                        )
+                else:
                     context.bot.send_message(
                         chat_id=update.effective_chat.id,
-                        text=order_for_human(order),
+                        text='Order not found',
                     )
 
 
@@ -289,90 +291,98 @@ def cancel_order(update, context):
 @restricted
 def monitoring_orders(update, context):
 
-    global account_name
-    global monitoring_state
-    global chat_id_for_orders_notifications
+    global monitoring_state_name_chat_id
 
 
     if len(" ".join(context.args)) == 0:
                 context.bot.send_message(
                     chat_id=update.effective_chat.id,
-                    text="/monitoring_orders <account_name> on/off\n\n/monitoring_orders <account_name> status",
+                    text="/monitoring_orders <account_name> <on/off>\n\n\nCoinPairs or ALL(a long wait for an update - up to six minutes, binance's restriction) must be set in config file\n\n/monitoring_orders <account_name> status\n\n\n",
                 )
-
-    if context.args[1].upper() == "STATUS":
-        context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text=f"Orders monitoring is {monitoring_state}",
-        )
-
-    if context.args[1].upper() == "ON" and monitoring_state == "ON":
-        context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text=f"Orders monitoring is already {monitoring_state}, turn OFF it before new start",
-        )
-
-    if context.args[1].upper() == "OFF":
-        chat_id_for_orders_notifications = None
-        account_name = ''
-        monitoring_state = context.args[1].upper()
-        context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text=f"Orders monitoring is {monitoring_state}",
-        )
-
-    if context.args[1].upper() == "ON" and monitoring_state == "OFF":
-        chat_id_for_orders_notifications = update.effective_chat.id
+    else:
         account_name = context.args[0]
-        monitoring_state = context.args[1].upper()
-        context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text=f"Orders monitoring is {monitoring_state}",
-        )
+
+        if context.args[1].upper() == "STATUS":
+            status = [c for n, c, v in monitoring_state_name_chat_id if account_name == n]
+            if len(status) == 0:
+                status = ['OFF']
+            context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text=f"Orders monitoring is {status[0]}",
+            )
+
+
+        if context.args[1].upper() == "OFF":
+            for account_name, c, v in monitoring_state_name_chat_id:
+                x = [(index, k) for index, k in enumerate(monitoring_state_name_chat_id) if account_name == k[0]]
+                if account_name == x[0][1][0]:
+                    pop = monitoring_state_name_chat_id.pop(x[0][0] + 1)
+                    context.bot.send_message(
+                        chat_id=update.effective_chat.id,
+                        text=f"Orders monitoring for account {pop[0]} is OFF",
+                    )
+
+        if context.args[1].upper() == "ON":
+            for n, c, v in monitoring_state_name_chat_id:
+                if account_name != n and account_name not in [z for z, x, v in monitoring_state_name_chat_id]:
+                    state = context.args[1].upper()
+                    chat_id = update.effective_chat.id
+                    monitoring_state_name_chat_id.append((account_name, state, chat_id))
+                    context.bot.send_message(
+                        chat_id=update.effective_chat.id,
+                        text=f"Orders monitoring for account {account_name} is {state}",
+                    )
 
 
 def orders_monitoring():
+
     global open_orders
 
     def order_status_is_open(order_id, coin_pair):
         order = exchange(account_name).fetch_order(order_id, coin_pair)
         return order, order['status']
 
+    def get_new_open_orders(account_name):
+        if get_config()['coin_pairs'][0] == 'ALL':
+            all_markets = exchange(account_name).fetch_markets()
+            markets = [i['symbol'] for i in all_markets]
+            balances = exchange(account_name).fetch_balance()['total']
+            coins_1 = [k for k, v in balances.items() if v > 0 and k != 'VTHO']
+            coin_pairs = [t for i in coins_1 for t in markets if i == (t.split('/')[1])]
+        else:
+            coin_pairs = get_config()['coin_pairs']
+        return [(account_name, i['id'], i['symbol']) for i in [x for h in coin_pairs for x in exchange(account_name).fetch_open_orders(h) if len(x) > 0]]
+
+
     try:
         while True:
-            if monitoring_state == 'ON':
-                all_markets = exchange(account_name).fetch_markets()
-                markets = [i['symbol'] for i in all_markets]
-                balances = exchange(account_name).fetch_balance()['total']
-                coins_1 = [k for k, v in balances.items() if v > 0 and k != 'VTHO']
-                coin_pairs = [t for i in coins_1 for t in markets if i == (t.split('/')[1])]
+            for account_name in [k for index, k in enumerate([i["name"] for i in get_config()["exchange_api_data"]])]:
+                open_orders_new = get_new_open_orders(account_name)
 
-                open_orders_new = [(i['id'], i['symbol']) for i in [x for h in coin_pairs for x in exchange(account_name).fetch_open_orders(h) if len(x) > 0]]
-                if len(open_orders) == 0:
-                    if len(open_orders_new) != 0:
-                        open_orders = open_orders_new
+            if len(open_orders) == 0:
+                open_orders = open_orders_new
 
-                for c, v in open_orders_new:
-                    if c not in [x for x, v in open_orders]:
-                        open_orders.append((c, v))
+            for n, c, v in open_orders_new:
+                if c not in [x for z, x, v in open_orders]:
+                    open_orders.append((n, c, v))
 
-                for c, v in open_orders:
-                    order_status_is_open_data = order_status_is_open(c, v)
-                    if order_status_is_open_data[1] != 'open':
-                        pop = open_orders.pop([index for index, k in enumerate(open_orders) if (c, v) == k][0])
-                        updater.bot.send_message(
-                            chat_id=chat_id_for_orders_notifications,
-                            text=order_for_human(order_status_is_open_data[0]),
-                        )
-
-                time.sleep(5)
-                continue
-            else:
-                time.sleep(5)
-                continue
+            for i in monitoring_state_name_chat_id:
+                if i[1] == 'ON':
+                    for account_name, c, v in open_orders:
+                        order_status_is_open_data = order_status_is_open(c, v)
+                        if order_status_is_open_data[1] != 'open':
+                            x = [(index, k) for index, k in enumerate(open_orders) if account_name == k[0]]
+                            if account_name == x[0][1][0]:
+                                pop = open_orders.pop(x[0][0])
+                                updater.bot.send_message(
+                                    chat_id=i[2],
+                                    text=order_for_human(order_status_is_open_data[0]),
+                                )
+            continue
 
     except Exception as e:
-        updater.bot.send_message(chat_id=chat_id_for_orders_notifications, text=str(e))
+        updater.bot.send_message(chat_id=admin_chat_id, text=str(e))
+
 
 
 if __name__ == "__main__":
@@ -391,5 +401,6 @@ if __name__ == "__main__":
     updater.start_polling()
 
     orders_monitoring()
+
 
     updater.idle()

@@ -1,6 +1,9 @@
 {
   "telegram_chat_id": "ASK YOUR ID HERE @chatid_echo_bot",
   "telegram_bot_key": "CREATE YOUR TELEGRAM BOT HERE @BotFather",
+  "!_coin_pairs_example_!": ["BTC/USDT", "ETH/USDT", "XRP/USDT", "BNB/USDT", "ETH/BTC", "XRP/BTC", "BNB/BTC"],
+  "!_coin_pairs_example_!": ["ALL"],
+  "coin_pairs": ["BTC/USDT", "ETH/USDT", "XRP/USDT", "BNB/USDT", "ETH/BTC", "XRP/BTC", "BNB/BTC"],
   "exchange_api_data": [
     {"account_name": "value", "key": "value", "secret": "value"},
     {"account_name": "value", "key": "value", "secret": "value"},

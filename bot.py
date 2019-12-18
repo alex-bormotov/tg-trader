@@ -229,7 +229,8 @@ def show_orders(update, context):
                 markets = [i['symbol'] for i in all_markets]
                 balances = exchange(account_name).fetch_balance()['total']
                 coins_1 = [k for k, v in balances.items() if v > 0 and k != 'VTHO']
-                coin_pairs = [t for i in coins_1 for t in markets if i == (t.split('/')[0])]
+                coins_1 = [k for k, v in balances.items()]
+                coin_pairs = [t for i in coins_1 for t in markets if i == (t.split('/')[1])]
                 open_orders = [x for h in coin_pairs for x in exchange(account_name).fetch_open_orders(h) if len(x) > 0]
                 for order in open_orders:
                     context.bot.send_message(
@@ -344,7 +345,7 @@ def orders_monitoring():
                 markets = [i['symbol'] for i in all_markets]
                 balances = exchange(account_name).fetch_balance()['total']
                 coins_1 = [k for k, v in balances.items() if v > 0 and k != 'VTHO']
-                coin_pairs = [t for i in coins_1 for t in markets if i == (t.split('/')[0])]
+                coin_pairs = [t for i in coins_1 for t in markets if i == (t.split('/')[1])]
 
                 open_orders_new = [(i['id'], i['symbol']) for i in [x for h in coin_pairs for x in exchange(account_name).fetch_open_orders(h) if len(x) > 0]]
                 if len(open_orders) == 0:
@@ -363,7 +364,7 @@ def orders_monitoring():
                             chat_id=chat_id_for_orders_notifications,
                             text=order_for_human(order_status_is_open_data[0]),
                         )
-                        
+
                 time.sleep(5)
                 continue
             else:

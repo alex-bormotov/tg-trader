@@ -371,7 +371,7 @@ def orders_monitoring():
                 continue
 
     except Exception as e:
-        context.bot.send_message(chat_id=update.effective_chat.id, text=str(e))
+        updater.bot.send_message(chat_id=chat_id_for_orders_notifications, text=str(e))
 
 
 if __name__ == "__main__":

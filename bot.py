@@ -356,6 +356,7 @@ def orders_monitoring():
 
     try:
         while True:
+            time.sleep(19)
             for account_name in [k for index, k in enumerate([i["name"] for i in get_config()["exchange_api_data"]])]:
                 open_orders_new = get_new_open_orders(account_name)
 

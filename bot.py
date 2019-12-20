@@ -226,7 +226,7 @@ def show_orders(update, context):
                         if order[0] == account_name:
                             context.bot.send_message(
                                 chat_id=update.effective_chat.id,
-                                text=order_for_human(exchange(account_name).fetch_order(order[1], order[2])),
+                                text=f'{account_name} {order_for_human(exchange(account_name).fetch_order(order[1], order[2]))}',
                             )
                 else:
                     context.bot.send_message(
@@ -349,14 +349,16 @@ def orders_monitoring():
             balances = exchange(account_name).fetch_balance()['total']
             coins_1 = [k for k, v in balances.items() if v > 0 and k != 'VTHO']
             coin_pairs = [t for i in coins_1 for t in markets if i == (t.split('/')[1])]
+            time.sleep(5)
         else:
             coin_pairs = get_config()['coin_pairs']
+        time.sleep(5)
         return [(account_name, i['id'], i['symbol']) for i in [x for h in coin_pairs for x in exchange(account_name).fetch_open_orders(h) if len(x) > 0]]
 
 
     try:
         while True:
-            time.sleep(19)
+            time.sleep(10)
             for account_name in [k for index, k in enumerate([i["name"] for i in get_config()["exchange_api_data"]])]:
                 open_orders_new = get_new_open_orders(account_name)
 
@@ -377,7 +379,7 @@ def orders_monitoring():
                                 pop = open_orders.pop(x[0][0])
                                 updater.bot.send_message(
                                     chat_id=i[2],
-                                    text=order_for_human(order_status_is_open_data[0]),
+                                    text=f'{account_name} {order_for_human(order_status_is_open_data[0])}',
                                 )
             continue
 

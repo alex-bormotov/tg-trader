@@ -371,6 +371,7 @@ def orders_monitoring():
             for i in monitoring_state_name_chat_id:
                 if i[1] == 'ON':
                     for account_name, c, v in open_orders:
+                        time.sleep(2)
                         order_status_is_open_data = order_status_is_open(c, v)
                         if order_status_is_open_data[1] != 'open':
                             x = [(index, k) for index, k in enumerate(open_orders) if account_name == k[0]]

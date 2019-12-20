@@ -349,17 +349,16 @@ def orders_monitoring():
             balances = exchange(account_name).fetch_balance()['total']
             coins_1 = [k for k, v in balances.items() if v > 0 and k != 'VTHO']
             coin_pairs = [t for i in coins_1 for t in markets if i == (t.split('/')[1])]
-            time.sleep(5)
         else:
             coin_pairs = get_config()['coin_pairs']
-        time.sleep(5)
         return [(account_name, i['id'], i['symbol']) for i in [x for h in coin_pairs for x in exchange(account_name).fetch_open_orders(h) if len(x) > 0]]
 
 
     try:
         while True:
-            time.sleep(10)
+            time.sleep(3)
             for account_name in [k for index, k in enumerate([i["name"] for i in get_config()["exchange_api_data"]])]:
+                time.sleep(2)
                 open_orders_new = get_new_open_orders(account_name)
 
             if len(open_orders) == 0:

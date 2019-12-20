@@ -221,17 +221,25 @@ def show_orders(update, context):
         else:
             if context.args[1] == 'all':
                 account_name = context.args[0]
-                if len(open_orders) != 0:
+
+                if len(open_orders) != 0 and 'ON' in [c for n, c, v in monitoring_state_name_chat_id if account_name == n]:
                     for order in open_orders:
                         if order[0] == account_name:
                             context.bot.send_message(
                                 chat_id=update.effective_chat.id,
-                                text=order_for_human(exchange(account_name).fetch_order(order[1], order[2])),
+                                text=f'Account {account_name}\n\n{order_for_human(exchange(account_name).fetch_order(order[1], order[2]))}',
                             )
-                else:
+
+                if len(open_orders) == 0 and 'ON' in [c for n, c, v in monitoring_state_name_chat_id if account_name == n]:
                     context.bot.send_message(
                         chat_id=update.effective_chat.id,
                         text='Orders not found',
+                    )
+
+                if 'ON' not in [c for n, c, v in monitoring_state_name_chat_id if account_name == n]:
+                    context.bot.send_message(
+                        chat_id=update.effective_chat.id,
+                        text='For see all orders you need to enable /monitoring_orders',
                     )
 
             else:
@@ -243,7 +251,7 @@ def show_orders(update, context):
                     for order in orders:
                         context.bot.send_message(
                             chat_id=update.effective_chat.id,
-                            text=order_for_human(order),
+                            text=f'Account {account_name}\n\n{order_for_human(order)}',
                         )
                 else:
                     context.bot.send_message(
@@ -356,31 +364,32 @@ def orders_monitoring():
 
     try:
         while True:
-            time.sleep(3)
             for account_name in [k for index, k in enumerate([i["name"] for i in get_config()["exchange_api_data"]])]:
-                time.sleep(2)
-                open_orders_new = get_new_open_orders(account_name)
+                t = [n for n, c, v in monitoring_state_name_chat_id if n == account_name and c == 'ON']
+                if len(t) != 0:
+                    open_orders_new = get_new_open_orders(account_name)
+                    time.sleep(2)
 
-            if len(open_orders) == 0:
-                open_orders = open_orders_new
+                    if len(open_orders) == 0:
+                        open_orders = open_orders_new
 
-            for n, c, v in open_orders_new:
-                if c not in [x for z, x, v in open_orders]:
-                    open_orders.append((n, c, v))
+                    for n, c, v in open_orders_new:
+                        if c not in [x for z, x, v in open_orders]:
+                            open_orders.append((n, c, v))
 
-            for i in monitoring_state_name_chat_id:
-                if i[1] == 'ON':
-                    for account_name, c, v in open_orders:
-                        time.sleep(2)
-                        order_status_is_open_data = order_status_is_open(c, v)
-                        if order_status_is_open_data[1] != 'open':
-                            x = [(index, k) for index, k in enumerate(open_orders) if account_name == k[0]]
-                            if account_name == x[0][1][0]:
-                                pop = open_orders.pop(x[0][0])
-                                updater.bot.send_message(
-                                    chat_id=i[2],
-                                    text=order_for_human(order_status_is_open_data[0]),
-                                )
+                    for i in monitoring_state_name_chat_id:
+                        if i[1] == 'ON':
+                            for account_name, c, v in open_orders:
+                                time.sleep(3)
+                                order_status_is_open_data = order_status_is_open(c, v)
+                                if order_status_is_open_data[1] != 'open':
+                                    x = [(index, k) for index, k in enumerate(open_orders) if account_name == k[0]]
+                                    if account_name == x[0][1][0]:
+                                        pop = open_orders.pop(x[0][0])
+                                        updater.bot.send_message(
+                                            chat_id=i[2],
+                                            text=f'Account {account_name}\n\n{order_for_human(order_status_is_open_data[0])}',
+                                        )
             continue
 
     except Exception as e:

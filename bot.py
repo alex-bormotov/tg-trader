@@ -368,7 +368,6 @@ def orders_monitoring():
                 t = [n for n, c, v in monitoring_state_name_chat_id if n == account_name and c == 'ON']
                 if len(t) != 0:
                     open_orders_new = get_new_open_orders(account_name)
-                    time.sleep(2)
 
                     if len(open_orders) == 0:
                         open_orders = open_orders_new
@@ -380,7 +379,6 @@ def orders_monitoring():
                     for i in monitoring_state_name_chat_id:
                         if i[1] == 'ON':
                             for account_name, c, v in open_orders:
-                                time.sleep(3)
                                 order_status_is_open_data = order_status_is_open(c, v)
                                 if order_status_is_open_data[1] != 'open':
                                     x = [(index, k) for index, k in enumerate(open_orders) if account_name == k[0]]
@@ -390,6 +388,7 @@ def orders_monitoring():
                                             chat_id=i[2],
                                             text=f'Account {account_name}\n\n{order_for_human(order_status_is_open_data[0])}',
                                         )
+            time.sleep(10)
             continue
 
     except Exception as e:

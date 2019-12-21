@@ -347,7 +347,7 @@ def orders_monitoring():
     global open_orders
 
     def order_status_is_open(order_id, coin_pair):
-        order = exchange(account_name).fetch_order(order_id, coin_pair)
+        order = exchange(account_name).fetch_order(order_id, coin_pair, {'recvWindow': 10000000})
         return order, order['status']
 
     def get_new_open_orders(account_name):
@@ -359,7 +359,7 @@ def orders_monitoring():
             coin_pairs = [t for i in coins_1 for t in markets if i == (t.split('/')[1])]
         else:
             coin_pairs = get_config()['coin_pairs']
-        return [(account_name, i['id'], i['symbol']) for i in [x for h in coin_pairs for x in exchange(account_name).fetch_open_orders(h) if len(x) > 0]]
+        return [(account_name, i['id'], i['symbol']) for i in [x for h in coin_pairs for x in exchange(account_name).fetch_open_orders(h, {'recvWindow': 10000000}) if len(x) > 0]]
 
 
     try:

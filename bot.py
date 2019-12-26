@@ -392,9 +392,9 @@ def orders_monitoring():
             continue
 
     except Exception as e:
-        updater.bot.send_message(chat_id=admin_chat_id, text=str(e))
+#         updater.bot.send_message(chat_id=admin_chat_id, text=str(e))
         orders_monitoring()
-        updater.bot.send_message(chat_id=admin_chat_id, text='orders_monitoring() is restarted')
+#         updater.bot.send_message(chat_id=admin_chat_id, text='orders_monitoring() is restarted')
 
 
 

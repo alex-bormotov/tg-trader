@@ -75,8 +75,8 @@ def exchange(account_name):
         context.bot.send_message(chat_id=update.effective_chat.id, text=str(e))
 
 
-def usd_price(coin, amount, account_name):
-    price = exchange(account_name).fetch_ticker(f"{coin.upper()}/USDT")["last"]
+def usd_price(coin, amount, account_name): # BUSD
+    price = exchange(account_name).fetch_ticker(f"{coin.upper()}/BUSD")["last"]
     return price * amount
 
 
@@ -139,7 +139,7 @@ def fetch_balance(update, context):
                 b = exchange(account_name).fetch_balance()
                 context.bot.send_message(
                     chat_id=update.effective_chat.id,
-                    text=f'{coin.upper()} total {number_for_human(b[coin.upper()]["total"])}, free {number_for_human(b[coin.upper()]["free"])}, in order {b[coin.upper()]["used"]} ~ {round(usd_price(coin, b[coin.upper()]["total"], account_name))} USDT'
+                    text=f'{coin.upper()} total {number_for_human(b[coin.upper()]["total"])}, free {number_for_human(b[coin.upper()]["free"])}, in order {b[coin.upper()]["used"]} ~ {round(usd_price(coin, b[coin.upper()]["total"], account_name))} BUSD'
                 )
 
     except ccxt.NetworkError as e:
